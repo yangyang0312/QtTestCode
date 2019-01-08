@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style type="text/css">
+      body, html{
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        margin:0;
+      }
+      input{
+        width: 100%;
+        height: 33.34%;
+      }
+    </style>
+  </head>
+  <body>
+  <input type="BUTTON" value="无参调用QT" onclick="JsNoParam()"></input>
+  <input type="BUTTON" value="有参调用QT" onclick="JsWithParam()"></input>
+  <input type="BUTTON" value="QT有返回值" onclick="JsWithReturn()"></input>
+  </body>
+  <script type="text/javascript">
+    function JsNoParam() {
+        console.log("JsNoParam");
+        QTWindow.JsCallNoParam();
+    }
+    function JsWithParam() {
+        console.log("JsWithParam");
+        QTWindow.JsCallWithParam(2333,"JS String Param.");
+    }
+    function JsWithReturn() {
+        var ret = QTWindow.JsCallWithReturn();
+        console.log("JsWithReturn   RET:" + ret);
+    }
+    function QtCallNoParam() {
+        console.log("QtCallNoParam");
+    }
+    function QtCallWithParam(num,str) {
+        console.log("QtCallWithParam   param:" + num + " " + str);
+    }
+    function QtCallWithReturn() {
+        console.log("QtCallWithReturn");
+        return "This is a String from JS.";
+    }
+  </script>
+</html>
