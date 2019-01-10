@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content="百度地图,百度地图API，百度地图自定义工具，百度地图所见即所得工具" />
+    <meta name="description" content="百度地图API自定义地图，帮助用户在可视化操作下生成百度地图" />
+    <title>百度地图API自定义地图</title>
+    <!--引用百度地图API-->
+    <script type="text/javascript" src="getscript.js"></script>
+	<link rel="stylesheet" type="text/css" href="bmap.css" />
+    <style type="text/css">
+      body, html,#map{
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        margin:0;
+      }
+      .call{
+        width: 80px;
+        height: 40px;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <!--百度地图容器-->
+    <div id="map"></div>
+    
+  </body>
+  <script type="text/javascript">
+      var zoom = 9;
+      var centerLongitude = 108.962113;
+      var centerLatitude = 34.2496;
+    //创建和初始化地图函数：
+    function initMap(){
+      createMap();//创建地图
+      setMapEvent();//设置地图事件
+      addMapControl();//向地图添加控件
+      addMapOverlay();//向地图添加覆盖物
+    }
+    function createMap(){
+      map = new BMap.Map("map");
+      map.centerAndZoom(new BMap.Point(centerLongitude,centerLatitude),zoom);
+    }
+    function setMapEvent(){
+      //map.enableScrollWheelZoom();
+      //map.enableKeyboard();
+      map.enableDragging();
+      map.disableDoubleClickZoom();
+    }
+    function addClickHandler(target,window){
+      target.addEventListener("click",function(){
+        target.openInfoWindow(window);
+      });
+    }
+    function addMapOverlay(){
+    }
+    //向地图添加控件
+    function addMapControl(){
+      var scaleControl = new BMap.ScaleControl({anchor:BMAP_ANCHOR_BOTTOM_LEFT});
+      scaleControl.setUnit(BMAP_UNIT_IMPERIAL);
+      map.addControl(scaleControl);
+      //var navControl = new BMap.NavigationControl({anchor:BMAP_ANCHOR_TOP_LEFT,type:BMAP_NAVIGATION_CONTROL_LARGE});
+      //map.addControl(navControl);
+      //var overviewControl = new BMap.OverviewMapControl({anchor:BMAP_ANCHOR_BOTTOM_RIGHT,isOpen:true});
+      //map.addControl(overviewControl);
+    }
+    var map;
+    var ofX18 = 0.005748999999994453;
+    var ofY18 = 0.0027690000000006876;
+    var markers = [];
+    initMap();
+    addMarker("1","Local1","108",34,"images/marker_red.png","18792430347");
+    addMarker("2","Local2","107",33,"images/marker_red.png","18792430347");
+    addMarker("3","Local3","108",35,"images/marker_red.png","18792430347");
+    addMarker("4","Local4","110",35,"images/marker_red.png","18792430347");
+    //自适应View
+    function fitView(){
+        if(markers.length <= 0){
+            return;
+        }
+        var mapListPoint = [];
+        for (var i = 0; i < markers.length; ++i){
+            mapListPoint.push(markers[i].point);
+        }
+        if(mapListPoint.length > 0) {
+            var mb = map.getPointsBounds(mapListPoint);//包含所有点的最小范围矩形
+            var lengthX = (mb.maxX - mb.minX) * 0.01;
+            var lengthY = (mb.maxY - mb.minY) * 0.01;
+            var longitude = (mb.maxX + mb.minX) * 0.5;
+            var latitude = (mb.maxY + mb.minY) * 0.5;
+            var markBox = {minX:mb.minX - lengthX,maxX:mb.maxX + lengthX,minY:mb.minY - lengthY,maxY:mb.maxY + lengthY};
+            console.log("center X:" + latitude + " Y:" + longitude);
+            console.log("markBox minX:" + markBox.minX + " maxX:" + markBox.maxX + " minY:" + markBox.minY + " maxY:" + markBox.maxY);
+            var zoomLevel = map.zoomLevel;
+            for(i = 1;i <= 15;++i){
+                var times = Math.pow(2,i);
+                var ofXi = ofX18 * times;
+                var ofYi = ofY18 * times;
+                var boxI = {minX:longitude - ofXi,maxX:longitude + ofXi,minY:latitude - ofYi,maxY:latitude + ofYi};
+                if(markBox.maxX <= boxI.maxX && markBox.minX >= boxI.minX && markBox.maxY <= boxI.maxY && markBox.minY >= boxI.minY){
+                    zoomLevel = 18 - i;
+                    console.log("Find fixView zoomLevel:" + zoomLevel + " i:" + i + "   boxI minX:" + boxI.minX + " maxX:" + boxI.maxX + " minY:" + boxI.minY + " maxY:" + boxI.maxY);
+                    break;
+                }
+            }
+            map.centerAndZoom(new BMap.Point(longitude,latitude),zoomLevel);
+        }
+    }
+    //放大
+    function boost(){
+        //获取ofX18 ofY18
+        //var box = map.getBounds();
+        //console.log("zoomLevel:" + map.zoomLevel + " offX:" + (box.maxX - box.minX) * 0.5 + " offY:" + (box.maxY - box.minY) * 0.5);
+        map.zoomIn();
+    }
+    //缩小
+    function reduce(){
+        map.zoomOut();
+    }
+    //添加标记
+    function addMarker(id,name,latitude,longitude,iconPath,phoneNumber) {
+        var point = new BMap.Point(latitude,longitude);
+        var iconImg = new BMap.Icon(iconPath, new BMap.Size(23, 25),{imageOffset: new BMap.Size(0,0),infoWindowOffset:new BMap.Size(1,1),offset:new BMap.Size(0,21)});
+        var marker = new BMap.Marker(point,{icon:iconImg});
+        var label = new BMap.Label(name,{"offset":new BMap.Size(23,-17)});
+        marker.setLabel(label);
+        marker.markId = id;
+        marker.markName = name;
+        marker.markLatitude = latitude;
+        marker.markLongitude = longitude;
+        marker.markIconPath = iconPath;
+        marker.phoneNumber = phoneNumber;
+        map.addOverlay(marker);
+        (function(){
+            var content = "编号:&nbsp&nbsp" + id + "<br>经度:&nbsp&nbsp" + longitude + "<br>纬度:&nbsp&nbsp" + latitude + "<br>电话:&nbsp&nbsp" + phoneNumber +"<br>";
+            var callImage = "<img src=\"images/call.png\" class =\"call\" onclick=\"mainWindow.callNumber('" + phoneNumber + "');\"" + "/>";
+            var iw = new BMap.InfoWindow("<b class='iw_poi_title' title='" + name + "'>" + name + "</b><div class='iw_poi_content'>" + content + callImage + "</div>");
+            var _marker = marker;
+            _marker.addEventListener("click",function(){
+                this.openInfoWindow(iw);
+            });
+            label.addEventListener("click",function(){
+                _marker.openInfoWindow(iw);
+            })
+        })();
+        markers.push(marker);
+    }
+    //删除标记
+    function delMarker(info){
+        for(var i = 0;i< markers.length; i++){
+            if(markers[i].name == info){
+                map.removeOverlay(markers[i]);
+                markers.splice(i,1);
+                --i;
+            }
+        }
+    }
+    //删除所有标记
+    function delAllMarker(){
+        map.clearOverlays();
+        markers = [];
+    }
+    //获取范围内的电话
+    function getBoundsNumbers(px1,py1,px2,py2) {
+        console.log("getBoundsNumbers px1:" + px1 + " py1:" + py1 + " px2:" + px2 + " py2:" + py2);
+        var lp1 = map.pixelToPoint(new BMap.Pixel(px1 < px2 ? px1 : px2,py1 > py2 ? py1 : py2));
+        var lp2 = map.pixelToPoint(new BMap.Pixel(px1 > px2 ? px1 : px2,py1 < py2 ? py1 : py2));
+        console.log("lp1 x:" + lp1.lng + " y:" + lp1.lat + " lp2 x:" + lp2.lng + " y:" + lp2.lat);
+        var ret = [];
+        for(i = 0;i < markers.length;++i){
+            console.log("longtude:" + markers[i].point.lng + " latitude:" + markers[i].point.lat);
+            if(markers[i].point.lng >= lp1.lng && markers[i].point.lng <= lp2.lng && markers[i].point.lat >= lp1.lat && markers[i].point.lat <= lp2.lat){
+                console.log("find marker longtude:" + markers[i].point.lng + " latitude:" + markers[i].point.lat + " markers[i].phoneNumber:" + markers[i].phoneNumber);
+                ret.push(markers[i].phoneNumber);
+            }
+        }
+        return ret;
+    }
+    function addNewMapDiv() {
+        zoom = map.zoomLevel;
+        var mb = map.getBounds();//包含所有点的最小范围矩形
+        centerLongitude = (mb.maxX + mb.minX) * 0.5;
+        centerLatitude = (mb.maxY + mb.minY) * 0.5;
+        var tempMark = [];
+        for(i = 0;i < markers.length;++i) {
+            var temp = {};
+            temp.id = markers[i].markId;
+            temp.name = markers[i].markName;
+            temp.latitude = markers[i].markLatitude;
+            temp.longitude = markers[i].markLongitude;
+            temp.iconPath = markers[i].markIconPath;
+            temp.phoneNumber = markers[i].phoneNumber;
+            tempMark.push(temp);
+        }
+        markers = [];
+        var mapNode = document.getElementById("map");
+        mapNode.parentNode.removeChild(mapNode);
+        var newDiv = document.createElement("div");
+        newDiv.id = "map";
+        document.body.appendChild(newDiv);
+        initMap();
+        for(i = 0;i < tempMark.length;++i){
+            addMarker(tempMark[i].id,tempMark[i].name,tempMark[i].latitude,tempMark[i].longitude,tempMark[i].iconPath,tempMark[i].phoneNumber);
+        }
+    }
+    function showSatellite() {
+        tilesPath = "SatelliteTiles/";
+        addNewMapDiv();
+    }
+    function showNormal() {
+        tilesPath = "tiles/";
+        addNewMapDiv();
+    }
+  </script>
+</html>

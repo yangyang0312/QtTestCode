@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>BaiduMap.html</file>
+    </qresource>
+</RCC>
